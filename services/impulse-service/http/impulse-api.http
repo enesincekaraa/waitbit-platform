@@ -66,3 +66,38 @@ Accept: application/problem+json
   "amount": -100,
   "currency": ""
 }
+
+
+
+### Create Impulse For Purchase
+POST {{baseUrl}}/api/v1/impulses
+Content-Type: application/json
+Accept: application/json
+
+{
+  "productName": "MacBook Pro M5",
+  "amount": 89999.90,
+  "currency": "TRY"
+}
+
+> {%
+    client.global.set(
+        "purchaseImpulseId",
+        response.body.id
+    );
+%}
+
+
+### Purchase Impulse
+POST {{baseUrl}}/api/v1/impulses/{{purchaseImpulseId}}/purchase
+Accept: application/json
+
+
+### Find Purchased Impulse
+GET {{baseUrl}}/api/v1/impulses/{{purchaseImpulseId}}
+Accept: application/json
+
+
+### Purchase Same Impulse Again - Expect 409
+POST {{baseUrl}}/api/v1/impulses/{{purchaseImpulseId}}/purchase
+Accept: application/problem+json
