@@ -1,9 +1,6 @@
 package com.waitbit.impulse.web;
 
-import com.waitbit.impulse.application.CreateImpulseCommand;
-import com.waitbit.impulse.application.CreateImpulseService;
-import com.waitbit.impulse.application.FindImpulseService;
-import com.waitbit.impulse.application.SkipImpulseService;
+import com.waitbit.impulse.application.*;
 import com.waitbit.impulse.domain.Impulse;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -20,13 +17,15 @@ public class ImpulseController {
     private final CreateImpulseService createImpulseService;
     private final FindImpulseService  findImpulseService;
     private final SkipImpulseService skipImpulseService;
+    private final PurchaseImpulseService  purchaseImpulseService;
 
     public ImpulseController(
-            CreateImpulseService createImpulseService, FindImpulseService findImpulseService, SkipImpulseService skipImpulseService
+            CreateImpulseService createImpulseService, FindImpulseService findImpulseService, SkipImpulseService skipImpulseService, PurchaseImpulseService purchaseImpulseService
     ) {
         this.createImpulseService = createImpulseService;
         this.findImpulseService = findImpulseService;
         this.skipImpulseService = skipImpulseService;
+        this.purchaseImpulseService = purchaseImpulseService;
     }
 
     @PostMapping
@@ -73,6 +72,16 @@ public class ImpulseController {
                 skipImpulseService.skip(id);
 
         return ImpulseResponse.from(skipped);
+    }
+
+    @PostMapping("/{id}/purchase")
+    public ImpulseResponse purchase(
+            @PathVariable UUID id
+    ) {
+        Impulse purchased =
+                purchaseImpulseService.purchase(id);
+
+        return ImpulseResponse.from(purchased);
     }
 
 

@@ -48,6 +48,9 @@ class ImpulseControllerTest {
     @MockitoBean
     private SkipImpulseService skipImpulseService;
 
+    @MockitoBean
+    private PurchaseImpulseService purchaseImpulseService;
+
     @Test
     void shouldCreateImpulse() throws Exception {
 
@@ -312,5 +315,110 @@ class ImpulseControllerTest {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code")
                         .value("IMPULSE_NOT_FOUND"));
+    }
+
+    @Test
+    void shouldPurchaseImpulse() throws Exception {
+
+        Impulse impulse = Impulse.quarantine(
+                IMPULSE_ID,
+                "MacBook Pro M5",
+                new Money(
+                        new BigDecimal("89999.90"),
+                        Currency.getInstance("TRY")
+                ),
+                CREATED_AT
+        );
+
+        impulse.purchase();
+
+        when(purchaseImpulseService.purchase(IMPULSE_ID))
+                .thenReturn(impulse);
+
+        mockMvc.perform(
+                        post(
+                                "/api/v1/impulses/{id}/purchase",
+                                IMPULSE_ID
+                        )
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id")
+                        .value(IMPULSE_ID.toString()))
+                .andExpect(jsonPath("$.productName")
+                        .value("MacBook Pro M5"))
+                .andExpect(jsonPath("$.amount")
+                        .value(89999.90))
+                .andExpect(jsonPath("$.currency")
+                        .value("TRY"))
+                .andExpect(jsonPath("$.status")
+                        .value("PURCHASED"));
+
+        verify(purchaseImpulseService)
+                .purchase(IMPULSE_ID);
+    }
+
+    @Test
+    void shouldReturnConflictWhenImpulseCannotBePurchased()
+            throws Exception {
+
+        when(purchaseImpulseService.purchase(IMPULSE_ID))
+                .thenThrow(
+                        new InvalidImpulseStateException(
+                                "Impulse cannot be purchased from status: SKIPPED"
+                        )
+                );
+
+        mockMvc.perform(
+                        post(
+                                "/api/v1/impulses/{id}/purchase",
+                                IMPULSE_ID
+                        )
+                )
+                .andExpect(status().isConflict())
+                .andExpect(content().contentType(
+                        "application/problem+json"
+                ))
+                .andExpect(jsonPath("$.status")
+                        .value(409))
+                .andExpect(jsonPath("$.title")
+                        .value("Invalid impulse state"))
+                .andExpect(jsonPath("$.code")
+                        .value("INVALID_IMPULSE_STATE"))
+                .andExpect(jsonPath("$.detail")
+                        .value(
+                                "Impulse cannot be purchased from status: SKIPPED"
+                        ));
+
+        verify(purchaseImpulseService)
+                .purchase(IMPULSE_ID);
+    }
+
+    @Test
+    void shouldReturnNotFoundWhenPurchasingMissingImpulse()
+            throws Exception {
+
+        UUID missingId = UUID.fromString(
+                "11111111-1111-1111-1111-111111111111"
+        );
+
+        when(purchaseImpulseService.purchase(missingId))
+                .thenThrow(
+                        new ImpulseNotFoundException(missingId)
+                );
+
+        mockMvc.perform(
+                        post(
+                                "/api/v1/impulses/{id}/purchase",
+                                missingId
+                        )
+                )
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status")
+                        .value(404))
+                .andExpect(jsonPath("$.code")
+                        .value("IMPULSE_NOT_FOUND"));
+
+        verify(purchaseImpulseService)
+                .purchase(missingId);
     }
 }

@@ -60,6 +60,6 @@ public final class InMemoryImpulseRepository implements ImpulseRepository {
                             + impulse.id()
             );
         }
-        return existing;
+        return impulse;
     }
 }
