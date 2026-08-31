@@ -5,6 +5,7 @@ import com.waitbit.impulse.domain.Impulse;
 
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -30,5 +31,15 @@ public final class InMemoryImpulseRepository implements ImpulseRepository {
            );
        }
         return impulse;
+    }
+
+    @Override
+    public Optional<Impulse> findById(UUID id) {
+        Objects.requireNonNull(
+                id,
+                "id must not be null"
+        );
+
+        return Optional.ofNullable(storage.get(id));
     }
 }

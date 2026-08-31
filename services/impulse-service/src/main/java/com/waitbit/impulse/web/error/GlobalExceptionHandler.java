@@ -1,5 +1,6 @@
 package com.waitbit.impulse.web.error;
 
+import com.waitbit.impulse.application.ImpulseNotFoundException;
 import com.waitbit.impulse.web.InvalidCurrencyCodeException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -24,6 +25,21 @@ public class GlobalExceptionHandler {
                 "INVALID_CURRENCY"
         );
 
+        return problem;
+    }
+
+    @ExceptionHandler(ImpulseNotFoundException.class)
+    public ProblemDetail handleImpulseNotFound(
+            ImpulseNotFoundException exception
+    ){
+        ProblemDetail problem =
+                ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
+        problem.setTitle("Impulse not found");
+        problem.setDetail(exception.getMessage());
+        problem.setProperty(
+                "code",
+                "IMPULSE_NOT_FOUND"
+        );
         return problem;
     }
 

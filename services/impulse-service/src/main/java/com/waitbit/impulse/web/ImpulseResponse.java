@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
 
-public record CreateImpulseResponse(
+public record ImpulseResponse(
         UUID id,
         String productName,
         BigDecimal amount,
@@ -17,8 +17,8 @@ public record CreateImpulseResponse(
         Instant quarantineEndsAt
 ) {
 
-    public static CreateImpulseResponse from(Impulse impulse) {
-        return new CreateImpulseResponse(
+    public static ImpulseResponse from(Impulse impulse) {
+        return new ImpulseResponse(
                 impulse.id(),
                 impulse.productName(),
                 impulse.price().amount(),

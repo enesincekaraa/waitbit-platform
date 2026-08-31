@@ -2,6 +2,8 @@ package com.waitbit.impulse.web;
 
 import com.waitbit.impulse.application.CreateImpulseCommand;
 import com.waitbit.impulse.application.CreateImpulseService;
+import com.waitbit.impulse.application.FindImpulseService;
+import com.waitbit.impulse.application.ImpulseNotFoundException;
 import com.waitbit.impulse.domain.Impulse;
 import com.waitbit.impulse.domain.Money;
 import com.waitbit.impulse.web.error.GlobalExceptionHandler;
@@ -21,6 +23,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(ImpulseController.class)
@@ -40,6 +43,9 @@ class ImpulseControllerTest {
 
     @MockitoBean
     private CreateImpulseService createImpulseService;
+
+    @MockitoBean
+    private FindImpulseService findImpulseService;
 
     @Test
     void shouldCreateImpulse() throws Exception {
@@ -142,5 +148,82 @@ class ImpulseControllerTest {
                         .value(
                                 "Unsupported currency code: ABC"
                         ));
+    }
+
+
+    @Test
+    void shouldFindImpulseById() throws Exception {
+
+        Impulse impulse = Impulse.quarantine(
+                IMPULSE_ID,
+                "Sony WH-1000XM6",
+                new Money(
+                        new BigDecimal("19499.90"),
+                        Currency.getInstance("TRY")
+                ),
+                CREATED_AT
+        );
+
+        when(findImpulseService.findById(IMPULSE_ID))
+                .thenReturn(impulse);
+
+        mockMvc.perform(
+                        get("/api/v1/impulses/{id}", IMPULSE_ID)
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id")
+                        .value(IMPULSE_ID.toString()))
+                .andExpect(jsonPath("$.productName")
+                        .value("Sony WH-1000XM6"))
+                .andExpect(jsonPath("$.amount")
+                        .value(19499.90))
+                .andExpect(jsonPath("$.currency")
+                        .value("TRY"))
+                .andExpect(jsonPath("$.status")
+                        .value("QUARANTINED"))
+                .andExpect(jsonPath("$.createdAt")
+                        .value("2026-08-31T12:30:22Z"))
+                .andExpect(jsonPath("$.quarantineEndsAt")
+                        .value("2026-09-07T12:30:22Z"));
+
+        verify(findImpulseService)
+                .findById(IMPULSE_ID);
+    }
+
+    @Test
+    void shouldReturnNotFoundWhenImpulseDoesNotExist()
+            throws Exception {
+
+        UUID missingId =
+                UUID.fromString(
+                        "11111111-1111-1111-1111-111111111111"
+                );
+
+        when(findImpulseService.findById(missingId))
+                .thenThrow(
+                        new ImpulseNotFoundException(missingId)
+                );
+
+        mockMvc.perform(
+                        get("/api/v1/impulses/{id}", missingId)
+                )
+                .andExpect(status().isNotFound())
+                .andExpect(content().contentType(
+                        "application/problem+json"
+                ))
+                .andExpect(jsonPath("$.status")
+                        .value(404))
+                .andExpect(jsonPath("$.title")
+                        .value("Impulse not found"))
+                .andExpect(jsonPath("$.code")
+                        .value("IMPULSE_NOT_FOUND"))
+                .andExpect(jsonPath("$.detail")
+                        .value(
+                                "Impulse not found with id: "
+                                        + missingId
+                        ));
+
+        verify(findImpulseService)
+                .findById(missingId);
     }
 }
