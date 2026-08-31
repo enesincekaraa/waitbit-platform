@@ -1,10 +1,8 @@
 package com.waitbit.impulse.web;
 
-import com.waitbit.impulse.application.CreateImpulseCommand;
-import com.waitbit.impulse.application.CreateImpulseService;
-import com.waitbit.impulse.application.FindImpulseService;
-import com.waitbit.impulse.application.ImpulseNotFoundException;
+import com.waitbit.impulse.application.*;
 import com.waitbit.impulse.domain.Impulse;
+import com.waitbit.impulse.domain.InvalidImpulseStateException;
 import com.waitbit.impulse.domain.Money;
 import com.waitbit.impulse.web.error.GlobalExceptionHandler;
 import org.junit.jupiter.api.Test;
@@ -46,6 +44,9 @@ class ImpulseControllerTest {
 
     @MockitoBean
     private FindImpulseService findImpulseService;
+
+    @MockitoBean
+    private SkipImpulseService skipImpulseService;
 
     @Test
     void shouldCreateImpulse() throws Exception {
@@ -225,5 +226,91 @@ class ImpulseControllerTest {
 
         verify(findImpulseService)
                 .findById(missingId);
+    }
+
+
+    @Test
+    void shouldSkipImpulse() throws Exception {
+        Impulse impulse = Impulse.quarantine(
+                IMPULSE_ID,
+                "PlayStation 5 Pro",
+                new Money(
+                        new BigDecimal("38999.90"),
+                        Currency.getInstance("TRY")
+                ),
+                CREATED_AT
+        );
+
+        impulse.skip();
+
+        when(skipImpulseService.skip(IMPULSE_ID))
+                .thenReturn(impulse);
+
+
+        mockMvc.perform(
+                        post("/api/v1/impulses/{id}/skip", IMPULSE_ID)
+                )
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id")
+                        .value(IMPULSE_ID.toString()))
+                .andExpect(jsonPath("$.productName")
+                        .value("PlayStation 5 Pro"))
+                .andExpect(jsonPath("$.status")
+                        .value("SKIPPED"));
+
+        verify(skipImpulseService)
+                .skip(IMPULSE_ID);
+    }
+
+    @Test
+    void shouldReturnConflictWhenImpulseCannotBeSkipped()
+            throws Exception {
+
+        when(skipImpulseService.skip(IMPULSE_ID))
+                .thenThrow(
+                        new InvalidImpulseStateException(
+                                "Impulse cannot be skipped from status: SKIPPED"
+                        )
+                );
+
+        mockMvc.perform(
+                        post("/api/v1/impulses/{id}/skip", IMPULSE_ID)
+                )
+                .andExpect(status().isConflict())
+                .andExpect(content().contentType(
+                        "application/problem+json"
+                ))
+                .andExpect(jsonPath("$.status")
+                        .value(409))
+                .andExpect(jsonPath("$.title")
+                        .value("Invalid impulse state"))
+                .andExpect(jsonPath("$.code")
+                        .value("INVALID_IMPULSE_STATE"))
+                .andExpect(jsonPath("$.detail")
+                        .value(
+                                "Impulse cannot be skipped from status: SKIPPED"
+                        ));
+    }
+
+    @Test
+    void shouldReturnNotFoundWhenSkippingMissingImpulse()
+            throws Exception {
+
+        UUID missingId =
+                UUID.fromString(
+                        "11111111-1111-1111-1111-111111111111"
+                );
+
+        when(skipImpulseService.skip(missingId))
+                .thenThrow(
+                        new ImpulseNotFoundException(missingId)
+                );
+
+        mockMvc.perform(
+                        post("/api/v1/impulses/{id}/skip", missingId)
+                )
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code")
+                        .value("IMPULSE_NOT_FOUND"));
     }
 }

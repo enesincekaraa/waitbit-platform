@@ -8,4 +8,6 @@ import java.util.UUID;
 public interface ImpulseRepository {
     Impulse save(Impulse impulse);
     Optional<Impulse> findById(UUID id);
+    Impulse update(Impulse impulse);
+
 }

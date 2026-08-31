@@ -1,0 +1,68 @@
+### Health Check
+GET {{baseUrl}}/actuator/health
+Accept: application/json
+
+
+### Create Impulse
+POST {{baseUrl}}/api/v1/impulses
+Content-Type: application/json
+Accept: application/json
+
+{
+  "productName": "PlayStation 5 Pro",
+  "amount": 38999.90,
+  "currency": "TRY"
+}
+
+> {%
+    client.global.set("impulseId", response.body.id);
+%}
+
+
+### Find Created Impulse
+GET {{baseUrl}}/api/v1/impulses/{{impulseId}}
+Accept: application/json
+
+
+### Skip Impulse
+POST {{baseUrl}}/api/v1/impulses/{{impulseId}}/skip
+Accept: application/json
+
+
+### Find Skipped Impulse
+GET {{baseUrl}}/api/v1/impulses/{{impulseId}}
+Accept: application/json
+
+
+### Skip Same Impulse Again - Expect 409
+POST {{baseUrl}}/api/v1/impulses/{{impulseId}}/skip
+Accept: application/problem+json
+
+
+### Find Missing Impulse - Expect 404
+GET {{baseUrl}}/api/v1/impulses/11111111-1111-1111-1111-111111111111
+Accept: application/problem+json
+
+
+### Invalid Currency - Expect 400
+POST {{baseUrl}}/api/v1/impulses
+Content-Type: application/json
+Accept: application/problem+json
+
+{
+  "productName": "Sony WH-1000XM6",
+  "amount": 19499.90,
+  "currency": "ABC"
+}
+
+
+### Validation Error - Expect 400
+POST {{baseUrl}}/api/v1/impulses
+Content-Type: application/json
+Accept: application/problem+json
+
+{
+  "productName": " ",
+  "amount": -100,
+  "currency": ""
+}

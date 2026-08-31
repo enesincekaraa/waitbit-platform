@@ -3,6 +3,7 @@ package com.waitbit.impulse.web;
 import com.waitbit.impulse.application.CreateImpulseCommand;
 import com.waitbit.impulse.application.CreateImpulseService;
 import com.waitbit.impulse.application.FindImpulseService;
+import com.waitbit.impulse.application.SkipImpulseService;
 import com.waitbit.impulse.domain.Impulse;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -18,12 +19,14 @@ public class ImpulseController {
 
     private final CreateImpulseService createImpulseService;
     private final FindImpulseService  findImpulseService;
+    private final SkipImpulseService skipImpulseService;
 
     public ImpulseController(
-            CreateImpulseService createImpulseService, FindImpulseService findImpulseService
+            CreateImpulseService createImpulseService, FindImpulseService findImpulseService, SkipImpulseService skipImpulseService
     ) {
         this.createImpulseService = createImpulseService;
         this.findImpulseService = findImpulseService;
+        this.skipImpulseService = skipImpulseService;
     }
 
     @PostMapping
@@ -61,6 +64,15 @@ public class ImpulseController {
                 findImpulseService.findById(id);
 
         return ImpulseResponse.from(impulse);
+    }
+    @PostMapping("/{id}/skip")
+    public ImpulseResponse skip(
+            @PathVariable UUID id
+    ) {
+        Impulse skipped =
+                skipImpulseService.skip(id);
+
+        return ImpulseResponse.from(skipped);
     }
 
 

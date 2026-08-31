@@ -3,6 +3,7 @@ package com.waitbit.impulse.configuration;
 import com.waitbit.impulse.application.CreateImpulseService;
 import com.waitbit.impulse.application.FindImpulseService;
 import com.waitbit.impulse.application.ImpulseRepository;
+import com.waitbit.impulse.application.SkipImpulseService;
 import com.waitbit.impulse.infrastructure.persistence.InMemoryImpulseRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -30,6 +31,10 @@ public class ImpulseConfiguration {
     @Bean
     public FindImpulseService  findImpulseService(ImpulseRepository impulseRepository) {
         return new FindImpulseService(impulseRepository);
+    }
+    @Bean
+    public SkipImpulseService  skipImpulseService(ImpulseRepository impulseRepository) {
+        return new SkipImpulseService(impulseRepository);
     }
 
 

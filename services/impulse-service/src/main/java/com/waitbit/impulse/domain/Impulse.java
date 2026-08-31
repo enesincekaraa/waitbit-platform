@@ -37,7 +37,7 @@ public final class Impulse {
 
 
     public void skip(){
-        if (!canBeDecided())throw new IllegalStateException("Impulse cannot be skipped from status: " + status);
+        if (!canBeDecided())throw new InvalidImpulseStateException("Impulse cannot be skipped from status: " + status);
         this.status = ImpulseStatus.SKIPPED;
     }
 
@@ -45,13 +45,13 @@ public final class Impulse {
         Objects.requireNonNull(now, "now must not be null");
 
         if (status!=ImpulseStatus.QUARANTINED){
-            throw new IllegalStateException(
+            throw new InvalidImpulseStateException(
                     "Only quarantined impulses can become ready for decision"
             );
         }
 
         if (now.isBefore(quarantineEndsAt)){
-            throw new IllegalStateException(
+            throw new InvalidImpulseStateException(
                     "Quarantine period has not ended yet"
             );
         }
@@ -60,7 +60,7 @@ public final class Impulse {
     }
 
     public void purchase(){
-        if (!canBeDecided())throw new IllegalStateException("Impulse cannot be purchased from status: " + status);
+        if (!canBeDecided())throw new InvalidImpulseStateException("Impulse cannot be purchased from status: " + status);
 
         this.status = ImpulseStatus.PURCHASED;
     }
