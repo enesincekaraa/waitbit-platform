@@ -1,6 +1,7 @@
 package com.waitbit.impulse.web.error;
 
 import com.waitbit.impulse.application.ImpulseNotFoundException;
+import com.waitbit.impulse.domain.InvalidImpulseStateException;
 import com.waitbit.impulse.web.InvalidCurrencyCodeException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -40,6 +41,23 @@ public class GlobalExceptionHandler {
                 "code",
                 "IMPULSE_NOT_FOUND"
         );
+        return problem;
+    }
+
+    @ExceptionHandler(InvalidImpulseStateException.class)
+    public ProblemDetail handleInvalidImpulseState(
+            InvalidImpulseStateException exception
+    ) {
+        ProblemDetail problem =
+                ProblemDetail.forStatus(HttpStatus.CONFLICT);
+
+        problem.setTitle("Invalid impulse state");
+        problem.setDetail(exception.getMessage());
+        problem.setProperty(
+                "code",
+                "INVALID_IMPULSE_STATE"
+        );
+
         return problem;
     }
 

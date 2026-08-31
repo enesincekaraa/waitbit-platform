@@ -106,4 +106,59 @@ class InMemoryImpulseRepositoryTest {
 
         assertTrue(result.isEmpty());
     }
+
+    @Test
+    void shouldUpdateExistingImpulse() {
+        InMemoryImpulseRepository repository =
+                new InMemoryImpulseRepository();
+
+        UUID id = UUID.randomUUID();
+
+        Impulse original = Impulse.quarantine(
+                id,
+                "PlayStation 5 Pro",
+                PRICE,
+                CREATED_AT
+        );
+
+        repository.save(original);
+
+        Impulse updated = Impulse.quarantine(
+                id,
+                "PlayStation 5 Pro - Updated",
+                new Money(
+                        new BigDecimal("39999.90"),
+                        Currency.getInstance("TRY")
+                ),
+                CREATED_AT
+        );
+
+        Impulse result = repository.update(updated);
+
+        assertSame(updated, result);
+
+        assertSame(
+                updated,
+                repository.findById(id).orElseThrow()
+        );
+    }
+
+    @Test
+    void shouldRejectUpdatingMissingImpulse() {
+        InMemoryImpulseRepository repository =
+                new InMemoryImpulseRepository();
+
+        Impulse impulse = Impulse.quarantine(
+                UUID.randomUUID(),
+                "PlayStation 5 Pro",
+                PRICE,
+                CREATED_AT
+        );
+
+        assertThrows(
+                IllegalStateException.class,
+                () -> repository.update(impulse)
+        );
+    }
+
 }

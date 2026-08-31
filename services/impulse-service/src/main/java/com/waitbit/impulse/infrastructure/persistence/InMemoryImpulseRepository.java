@@ -42,4 +42,24 @@ public final class InMemoryImpulseRepository implements ImpulseRepository {
 
         return Optional.ofNullable(storage.get(id));
     }
+
+    @Override
+    public Impulse update(Impulse impulse) {
+        Objects.requireNonNull(
+                impulse,
+                "impulse must not be null"
+        );
+        Impulse existing = storage.replace(
+                impulse.id(),
+                impulse
+        );
+
+        if (existing == null) {
+            throw new IllegalStateException(
+                    "Impulse does not exist with id: "
+                            + impulse.id()
+            );
+        }
+        return existing;
+    }
 }
