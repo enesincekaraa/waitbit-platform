@@ -9,8 +9,7 @@ import java.time.Instant;
 import java.util.Currency;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 class InMemoryImpulseRepositoryTest {
 
@@ -74,5 +73,37 @@ class InMemoryImpulseRepositoryTest {
                 IllegalStateException.class,
                 () -> repository.save(anotherImpulseWithSameId)
         );
+    }
+
+    @Test
+    void shouldFindSavedImpulseById(){
+        InMemoryImpulseRepository repository =
+                new InMemoryImpulseRepository();
+        UUID id = UUID.randomUUID();
+
+        Impulse impulse = Impulse.quarantine(
+                id,
+                "Sony WH-1000XM6",
+                PRICE,
+                CREATED_AT
+        );
+
+        repository.save(impulse);
+
+        var result = repository.findById(id);
+
+        assertTrue(result.isPresent());
+        assertSame(impulse, result.get());
+    }
+
+    @Test
+    void shouldReturnEmptyWhenImpulseDoesNotExist() {
+        InMemoryImpulseRepository repository =
+                new InMemoryImpulseRepository();
+
+        var result =
+                repository.findById(UUID.randomUUID());
+
+        assertTrue(result.isEmpty());
     }
 }
